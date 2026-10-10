@@ -23,6 +23,7 @@ document.addEventListener('alpine:init', () => {
         hls_dash_enabled: true,
         hls_dash_audio_languages: '',
         hls_dash_prefer_av1: false,
+        hls_dash_relay: true,
 
         innertube_enabled: true,
 
@@ -92,6 +93,7 @@ document.addEventListener('alpine:init', () => {
                 this.hls_dash_enabled = settings.hls_dash_enabled !== false;
                 this.hls_dash_audio_languages = settings.hls_dash_audio_languages || '';
                 this.hls_dash_prefer_av1 = settings.hls_dash_prefer_av1 === true;
+                this.hls_dash_relay = settings.hls_dash_relay !== false;
                 this.innertube_enabled = settings.innertube_enabled !== false;
                 this.invidious_enabled = settings.invidious_enabled !== false;
                 this.invidious_instance = settings.invidious_instance || '';
@@ -154,6 +156,7 @@ document.addEventListener('alpine:init', () => {
                     hls_dash_enabled: this.hls_dash_enabled,
                     hls_dash_audio_languages: (this.hls_dash_audio_languages || '').trim() || null,
                     hls_dash_prefer_av1: this.hls_dash_prefer_av1,
+                    hls_dash_relay: this.hls_dash_relay,
                     innertube_enabled: this.innertube_enabled,
                     invidious_enabled: this.invidious_enabled,
                     invidious_instance: this.invidious_instance || null,

@@ -116,6 +116,14 @@ class Settings(BaseModel):
         default=False,
         description="Prefer AV1 over H.264 when both exist at a quality (above 1080p AV1 is used regardless).",
     )
+    hls_dash_relay: bool = Field(
+        default=True,
+        description=(
+            "Fetch translated-HLS segments through /proxy/relay instead of straight from googlevideo. "
+            "googlevideo resets idle connections after a few minutes; ffmpeg then feeds the truncated "
+            "segment to the demuxer and video freezes after a pause while audio keeps playing."
+        ),
+    )
 
     # InnerTube (direct YouTube API)
     innertube_enabled: bool = True

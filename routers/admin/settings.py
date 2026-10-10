@@ -56,6 +56,7 @@ class SettingsResponse(BaseModel):
     hls_dash_enabled: bool
     hls_dash_audio_languages: Optional[str]
     hls_dash_prefer_av1: bool
+    hls_dash_relay: bool
     innertube_enabled: bool
     invidious_enabled: bool
     invidious_instance: Optional[str]
@@ -108,6 +109,7 @@ class SettingsUpdate(BaseModel):
     hls_dash_enabled: Optional[bool] = None
     hls_dash_audio_languages: Optional[str] = None
     hls_dash_prefer_av1: Optional[bool] = None
+    hls_dash_relay: Optional[bool] = None
     innertube_enabled: Optional[bool] = None
     invidious_enabled: Optional[bool] = None
     invidious_instance: Optional[str] = None

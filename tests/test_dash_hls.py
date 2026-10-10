@@ -206,3 +206,37 @@ class TestApiStreams:
     async def test_dash_hls_streams_skips_live(self, test_db):
         with patch("ytdlp_wrapper.get_video_info", AsyncMock(return_value={"is_live": True, "formats": FORMATS})):
             assert await dh.dash_hls_streams("abc", base_url="https://yt.example", relay=False) == []
+
+
+class TestRelaySetting:
+    @pytest.mark.asyncio
+    async def test_media_relays_segments_by_default(self, test_db):
+        from starlette.requests import Request
+
+        index = {"init_end": 5000, "timescale": 1000, "segments": [(5000, 1000, 1000)]}
+        scope = {
+            "type": "http",
+            "method": "GET",
+            "scheme": "https",
+            "server": ("yt.example", 443),
+            "path": "/proxy/dash-hls/media",
+            "headers": [],
+            "query_string": b"",
+        }
+        url = "https://rr1---sn-x.googlevideo.com/videoplayback?id=1"
+        with (
+            patch.object(dh, "_check"),
+            patch.object(dh, "is_safe_url", return_value=True),
+            patch.object(dh, "index_file", AsyncMock(return_value=index)),
+        ):
+            with patch.object(dh, "_relay_segments", return_value=True):
+                body = (await dh.dash_hls_media(Request(scope), url=url, sig="x", exp=1)).body.decode()
+                assert "https://yt.example/proxy/relay?url=" in body
+                assert all(
+                    ln.startswith("https://yt.example/proxy/relay?")
+                    for ln in body.splitlines()
+                    if ln.startswith("http")
+                )
+            with patch.object(dh, "_relay_segments", return_value=False):
+                body = (await dh.dash_hls_media(Request(scope), url=url, sig="x", exp=1)).body.decode()
+                assert all(ln.startswith(url) for ln in body.splitlines() if ln.startswith("http"))

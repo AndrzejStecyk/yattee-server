@@ -747,6 +747,16 @@
                                     <small class="block text-muted text-sm">Above 1080p AV1 is used regardless (no H.264 there). Hardware AV1 decoding needs M3 / A17 Pro or newer.</small>
                                 </div>
                             </div>
+                            <div class="flex items-center gap-3">
+                                <label class="toggle">
+                                    <input type="checkbox" x-model="hls_dash_relay" :disabled="!hls_filter_enabled || !hls_dash_enabled">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div>
+                                    <label class="font-medium cursor-pointer">Relay segments through this server</label>
+                                    <small class="block text-muted text-sm">Keep on. googlevideo drops idle connections after a few minutes, which freezes the video in mpv after a pause (audio keeps playing). Off = segments go straight to googlevideo.</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

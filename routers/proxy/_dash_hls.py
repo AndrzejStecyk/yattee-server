@@ -9,7 +9,7 @@ What the browser does instead is index-driven: it reads the ``sidx`` box and
 fetches each fragment with its own small Range request. HLS can express
 exactly that for fMP4 (``EXT-X-MAP`` + ``EXT-X-BYTERANGE``), so we only
 translate the *manifest*; the player still downloads every byte of media
-straight from googlevideo (or through /proxy/relay when relaying).
+through /proxy/relay (default, see _relay_segments) or straight from googlevideo.
 
   GET /proxy/dash-hls/master?v=<id>&h=1080[&fps=60]&sig&exp[&relay=1]
       master playlist: ONE video variant (the requested quality) plus one
@@ -75,6 +75,20 @@ def _extra_languages() -> list[str]:
 
 def _prefer_av1() -> bool:
     return bool(getattr(get_settings(), "hls_dash_prefer_av1", False))
+
+
+def _relay_segments() -> bool:
+    """Route segments through /proxy/relay.
+
+    ffmpeg's HLS demuxer keeps a persistent connection per playlist and, with
+    ``http_multiple`` (auto-enabled on HTTP/1.1), pre-opens the request for the
+    next segment and leaves its body unread. When the player pauses, googlevideo
+    resets those idle connections after a few minutes; on resume ffmpeg swallows
+    the mid-segment error, hands the truncated fragment to the mp4 demuxer and
+    the video stream never resyncs (frozen picture, audio continues). Relaying
+    moves the idle connection to our reverse proxy, which tolerates it.
+    """
+    return bool(getattr(get_settings(), "hls_dash_relay", True))
 
 
 def _height_bounds() -> tuple[int, int]:
@@ -466,7 +480,8 @@ async def dash_hls_master(
     if video is None or not audios:
         raise HTTPException(status_code=404, detail="No suitable DASH formats")
     base_url_self = get_base_url(request)
-    body = build_master(video, audios, base_url=base_url_self, relay=bool(relay))
+    relay_segments = bool(relay) or _relay_segments()
+    body = build_master(video, audios, base_url=base_url_self, relay=relay_segments)
     logger.info(
         f"[DASH-HLS] master {v} -> {video.get('format_id')} {video.get('height')}p "
         f"audio={[a.get('format_id') for a in audios]} in {int((time.monotonic() - t0) * 1000)}ms"
@@ -485,6 +500,7 @@ async def dash_hls_media(request: Request, url: str, sig: str, exp: int, relay: 
     except httpx.RequestError as e:
         raise HTTPException(status_code=502, detail=f"Upstream fetch failed: {e}") from e
     seg_url = url
+    relay = bool(relay) or _relay_segments()
     if relay:
         base_url_self = get_base_url(request)
         seg_url = signed_relay_url(base_url_self, url, content_type="video/mp4")
