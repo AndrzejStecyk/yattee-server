@@ -72,6 +72,51 @@ class Settings(BaseModel):
         ),
     )
 
+    # HLS master playlist filter (/proxy/hls-master) — Yattee 2 / mpv
+    hls_filter_enabled: bool = Field(
+        default=True,
+        description=(
+            "Serve VOD HLS master playlists through /proxy/hls-master, which "
+            "thins YouTube's variant list (auto-dubs, duplicates, quality cap) "
+            "so mpv/ffmpeg starts in seconds instead of probing 100+ variants."
+        ),
+    )
+    hls_audio_language: Optional[str] = Field(
+        default=None,
+        description=(
+            "Audio track to serve in HLS. Empty = original audio; a language code "
+            "(e.g. 'pl') = that dub when the video has one, else original."
+        ),
+    )
+    hls_min_height: int = Field(
+        default=0,
+        ge=0,
+        le=4320,
+        description="Lowest HLS quality (video height) offered to clients. 0 = no lower bound.",
+    )
+    hls_max_height: int = Field(
+        default=0,
+        ge=0,
+        le=4320,
+        description="Highest HLS quality (video height) offered to clients. 0 = no upper bound.",
+    )
+    hls_dash_enabled: bool = Field(
+        default=True,
+        description=(
+            "Translate YouTube DASH (up to 4K, separate audio languages) into HLS "
+            "playlists with byte-range segments fetched straight from googlevideo. "
+            "Replaces YouTube's own HLS (max 1080p, muxed audio) in the API."
+        ),
+    )
+    hls_dash_audio_languages: Optional[str] = Field(
+        default=None,
+        description="Extra audio languages to expose in translated HLS (original is always included), e.g. 'pl,en'.",
+    )
+    hls_dash_prefer_av1: bool = Field(
+        default=False,
+        description="Prefer AV1 over H.264 when both exist at a quality (above 1080p AV1 is used regardless).",
+    )
+
     # InnerTube (direct YouTube API)
     innertube_enabled: bool = True
 

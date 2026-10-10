@@ -34,7 +34,18 @@ def _maybe_relay_manifest(
     Manifest URLs from googlevideo are time-limited and IP-bound just like
     individual segment URLs, so they need the same off-LAN handling.
     """
-    if not url or proxy_mode != "relay" or not base_url:
+    if not url:
+        return url
+    is_hls = content_type == "application/vnd.apple.mpegurl"
+    if is_hls and base_url:
+        # Hand the master to /proxy/hls-master, which serves a single variant
+        # so mpv/ffmpeg does not probe 100+ muxed variants on start.
+        from routers.proxy import signed_hls_master_url
+        from routers.proxy._hls_master import filter_enabled
+
+        if filter_enabled():
+            return signed_hls_master_url(base_url, url, relay=(proxy_mode == "relay"))
+    if proxy_mode != "relay" or not base_url:
         return url
     from routers.proxy import signed_relay_url
 
